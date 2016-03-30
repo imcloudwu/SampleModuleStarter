@@ -28,6 +28,10 @@ class SampleViewController: ischoolViewCtrl {
         
         LoadData()
         
+        var log = LoginHelper(clientId: "", clientSecret: "", url: nil)
+        
+        Keychain.delete(<#T##key: String##String#>)
+        
     }
     
     func LoadData(){
