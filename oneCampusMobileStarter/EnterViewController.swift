@@ -1,0 +1,94 @@
+//
+//  EnterViewController.swift
+//  oneCampusMobileStarter
+//
+//  Created by Cloud on 2016/3/4.
+//  Copyright © 2016年 ischool. All rights reserved.
+//
+
+import UIKit
+import ischoolFramework
+import SampleModule
+
+class EnterViewController : UIViewController{
+    
+    @IBOutlet weak var loading: UIActivityIndicatorView!
+    
+    var loginHelper : LoginHelper!
+    
+    var modules = [SampleShell.Instance]
+    
+    //var modules = [ischoolProtocol]()
+    
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        
+        //Keychain.clear()
+        
+        //Keychain.save("refreshToken", data: "1234".dataValue)
+        
+        loginHelper = LoginHelper(clientId: clientID, clientSecret: clientSecret, url: nil)
+    }
+    
+    override func viewDidAppear(animated: Bool) {
+        
+        let scope = "User.Mail,User.BasicInfo,1Campus.Notification.Read,1Campus.Notification.Send,*:auth.guest,*:sakura" + GetScopes()
+        
+        let url = "https://auth.ischool.com.tw/oauth/authorize.php?client_id=\(clientID)&response_type=code&state=http://_blank&redirect_uri=http://_blank&scope=\(scope)"
+        
+        loginHelper.SetUrl(url)
+        
+        loginHelper.TryToLogin(self, success: GotoMainView)
+    }
+    
+    override func viewWillAppear(animated: Bool) {
+        
+        loading.startAnimating()
+    }
+    
+    override func viewDidDisappear(animated: Bool) {
+        
+        loading.stopAnimating()
+    }
+    
+    func GotoMainView(){
+        
+        let connectionManager = ConnectionManager(loginHelper: loginHelper)
+        
+        let resources = Resources(connectionManager: connectionManager)
+        
+        for module in modules{
+            
+            resources.AddFunction(module)
+        }
+        
+        self.presentViewController(SlideView.GetInstance(resources)!, animated: true, completion: nil)
+        
+    }
+    
+    func GetScopes() -> String{
+        
+        var basicScopes = ["*:1campus.mobile.dominator","*:1campus.mobile.teacher","*:1campus.mobile.parent","*:1campus.mobile.guest"]
+        
+        for module in modules{
+            
+            for s in module.Scopes{
+                
+                let key = "*:" + s
+                
+                if !basicScopes.contains(key){
+                    
+                    basicScopes.append(key)
+                }
+            }
+        }
+        
+        let retval = basicScopes.joinWithSeparator(",")
+        
+        return retval.isEmpty ? "" : "," + retval
+    }
+    
+    
+}
+
+
